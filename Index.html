@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cold Call Time Tracker</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f0f0f;
+      --surface: #1a1a1a;
+      --border: #2a2a2a;
+      --text: #f0ede6;
+      --muted: #888;
+      --optimal: #1D9E75;
+      --optimal-bg: #0a2e22;
+      --optimal-text: #5DCAA5;
+      --caution: #BA7517;
+      --caution-bg: #2e1e05;
+      --caution-text: #EF9F27;
+      --avoid: #c0392b;
+      --avoid-bg: #2e0d0a;
+      --avoid-text: #e87060;
+      --closed: #444;
+      --closed-bg: #1a1a1a;
+      --closed-text: #666;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    header {
+      max-width: 860px;
+      margin: 0 auto 2.5rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1.5rem;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .logo {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--optimal-text);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+    }
+
+    .your-time {
+      text-align: right;
+    }
+
+    .your-time .label {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .your-time .clock {
+      font-family: 'DM Mono', monospace;
+      font-size: 22px;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .legend {
+      max-width: 860px;
+      margin: 0 auto 1.75rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .leg-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .leg-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .grid {
+      max-width: 860px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 12px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      position: relative;
+      transition: border-color 0.3s;
+    }
+
+    .card.optimal { border-color: var(--optimal); }
+    .card.caution  { border-color: var(--caution); }
+    .card.avoid    { border-color: var(--avoid); }
+    .card.closed   { border-color: var(--border); opacity: 0.7; }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 10px;
+    }
+
+    .tz-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+    }
+
+    .badge {
+      font-size: 11px;
+      font-weight: 500;
+      padding: 3px 9px;
+      border-radius: 20px;
+    }
+
+    .badge.optimal { background: var(--optimal-bg); color: var(--optimal-text); }
+    .badge.caution  { background: var(--caution-bg); color: var(--caution-text); }
+    .badge.avoid    { background: var(--avoid-bg);   color: var(--avoid-text); }
+    .badge.closed   { background: var(--closed-bg);  color: var(--closed-text); border: 1px solid var(--border); }
+
+    .tz-time {
+      font-family: 'DM Mono', monospace;
+      font-size: 34px;
+      font-weight: 400;
+      line-height: 1;
+      margin-bottom: 12px;
+      letter-spacing: -0.02em;
+    }
+
+    .card.optimal .tz-time { color: var(--optimal-text); }
+    .card.caution  .tz-time { color: var(--caution-text); }
+    .card.avoid    .tz-time { color: var(--avoid-text); }
+    .card.closed   .tz-time { color: #555; }
+
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin-bottom: 10px;
+    }
+
+    .states {
+      font-size: 11.5px;
+      color: #666;
+      line-height: 1.7;
+    }
+
+    .tip {
+      max-width: 860px;
+      margin: 2rem auto 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+
+    .tip-item .tip-label {
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .tip-item .tip-val {
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .tick {
+      font-size: 10px;
+      font-family: 'DM Mono', monospace;
+      color: #333;
+      text-align: center;
+      margin-top: 3rem;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo">&#9679; Cold Call Planner</div>
+    <h1>US Time Zone Tracker</h1>
+  </div>
+  <div class="your-time">
+    <div class="label">Your local time</div>
+    <div class="clock" id="user-clock">--:-- --</div>
+  </div>
+</header>
+
+<div class="legend">
+  <div class="leg-item"><div class="leg-dot" style="background:var(--optimal)"></div> Optimal — 9–11am or 2–4pm</div>
+  <div class="leg-item"><div class="leg-dot" style="background:var(--caution)"></div> Okay — other business hours</div>
+  <div class="leg-item"><div class="leg-dot" style="background:var(--avoid)"></div> Avoid — lunch / late day</div>
+  <div class="leg-item"><div class="leg-dot" style="background:var(--closed)"></div> Closed</div>
+</div>
+
+<div class="grid" id="cards"></div>
+
+<div class="tip">
+  <div class="tip-item">
+    <div class="tip-label">Best days</div>
+    <div class="tip-val">Wednesday & Thursday</div>
+  </div>
+  <div class="tip-item">
+    <div class="tip-label">Best windows</div>
+    <div class="tip-val">9–11 AM &nbsp;&amp;&nbsp; 2–4 PM local time</div>
+  </div>
+  <div class="tip-item">
+    <div class="tip-label">Strategy tip</div>
+    <div class="tip-val">Work east → west through the morning</div>
+  </div>
+  <div class="tip-item">
+    <div class="tip-label">Avoid</div>
+    <div class="tip-val">Mon before 10am, Fri after 3pm, lunch hour</div>
+  </div>
+</div>
+
+<div class="tick" id="tick">auto-refreshes every 30s</div>
+
+<script>
+const zones = [
+  {
+    name: "Eastern (ET)",
+    iana: "America/New_York",
+    states: "CT, DE, FL, GA, IN, KY (most), MA, MD, ME, MI, NH, NJ, NY, NC, OH, PA, RI, SC, TN (most), VA, VT, WV, DC"
+  },
+  {
+    name: "Central (CT)",
+    iana: "America/Chicago",
+    states: "AL, AR, IA, IL, KS, LA, MN, MO, MS, NE, ND (most), OK, SD (most), TN (west), TX, WI, KY (west)"
+  },
+  {
+    name: "Mountain (MT)",
+    iana: "America/Denver",
+    states: "AZ (no DST), CO, ID (south), MT, NM, ND (sw), SD (west), UT, WY"
+  },
+  {
+    name: "Pacific (PT)",
+    iana: "America/Los_Angeles",
+    states: "CA, ID (north), NV, OR, WA"
+  },
+  {
+    name: "Alaska (AKT)",
+    iana: "America/Anchorage",
+    states: "AK (most)"
+  },
+  {
+    name: "Hawaii (HST)",
+    iana: "Pacific/Honolulu",
+    states: "HI"
+  }
+];
+
+function getHourMin(date, iana) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: iana, hour: "numeric", minute: "2-digit", hour12: false
+  }).formatToParts(date);
+  let h = 0, m = 0;
+  parts.forEach(p => {
+    if (p.type === "hour") h = parseInt(p.value);
+    if (p.type === "minute") m = parseInt(p.value);
+  });
+  return [h, m];
+}
+
+function getStatus(h, m) {
+  const t = h + m / 60;
+  if (t < 8 || t >= 18) return "closed";
+  if ((t >= 9 && t < 11) || (t >= 14 && t < 16)) return "optimal";
+  if ((t >= 12 && t < 13) || (t >= 17 && t < 18)) return "avoid";
+  return "caution";
+}
+
+const badgeText = {
+  optimal: "&#10003; Optimal to call",
+  caution:  "Okay to call",
+  avoid:    "&#9888; Avoid",
+  closed:   "Closed"
+};
+
+function formatTime(date, iana) {
+  return date.toLocaleTimeString("en-US", {
+    timeZone: iana, hour: "numeric", minute: "2-digit", hour12: true
+  });
+}
+
+function render() {
+  const now = new Date();
+  document.getElementById("user-clock").textContent = now.toLocaleTimeString("en-US", {
+    hour: "numeric", minute: "2-digit", hour12: true
+  });
+
+  document.getElementById("cards").innerHTML = zones.map(z => {
+    const timeStr = formatTime(now, z.iana);
+    const [h, m] = getHourMin(now, z.iana);
+    const status = getStatus(h, m);
+    return `<div class="card ${status}">
+      <div class="card-top">
+        <div class="tz-name">${z.name}</div>
+        <div class="badge ${status}">${badgeText[status]}</div>
+      </div>
+      <div class="tz-time">${timeStr}</div>
+      <div class="divider"></div>
+      <div class="states">${z.states}</div>
+    </div>`;
+  }).join("");
+
+  const s = now.getSeconds();
+  document.getElementById("tick").textContent = `refreshes in ${30 - (s % 30)}s`;
+}
+
+render();
+setInterval(render, 1000);
+</script>
+</body>
+</html>
